@@ -31,6 +31,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <thread>
+
 using namespace cv;
 
 static const std::string OPENCV_WINDOW = "Image window";
@@ -46,6 +48,9 @@ Mat rgb_info =  Mat::zeros(3, 3, CV_64FC1);;
 
 pcl::PointCloud<pcl::PointXYZ> cloud;
 
+geometry_msgs::Twist movement;
+
+// ros::Publisher mov_topic; // A topic which publishes the current movement.
 
 std::string getFile(std::string filename)
 {
@@ -292,19 +297,19 @@ geometry_msgs::Twist followCommand(){
     // Linear x to go back and forth. Depends on z.
     msg.linear.x = 0.0;
     if (average.z > 2){ // Go forwards - too far.
-      msg.linear.x = 0.26;
+      msg.linear.x = 0.1;
     }
     else if(average.z < 1.5){ // Go backwards - too close.
-      msg.linear.x = -0.26;
+      msg.linear.x = -0.1;
     }
 
     // Angular z to rotate. Depends on x.
     msg.angular.z = 0.0;
     if (average.x > 0.2){ // Person is to the right - turn left.
-      msg.angular.z = -0.5;
+      msg.angular.z = -0.2;
     }
     else if(average.x < -0.2){
-      msg.angular.z=0.5;
+      msg.angular.z=0.2;
     }
 
     // Check that image Mat is accessible outside of callbacks.
@@ -312,6 +317,13 @@ geometry_msgs::Twist followCommand(){
     cv::waitKey(3);
     
     return msg;
+}
+
+void pub_loop(ros::NodeHandle n){
+  ros::Publisher turtleMove = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+  while (true){
+    turtleMove.publish(movement);
+  }
 }
 
 int main(int argc, char **argv){
@@ -350,6 +362,7 @@ int main(int argc, char **argv){
 
     ros::NodeHandle n;
 
+
     // Spawn a person.
     // Models: https://bitbucket.org/theconstructcore/person_sim/downloads/
 
@@ -360,16 +373,18 @@ int main(int argc, char **argv){
     ros::Subscriber rgbInfoSub = n.subscribe("/camera/rgb/camera_info", 1, rgbIntrinsicsCallback);
 
     // Make publisher for movement commands. Open turtlebot teleop for this.
-    ros::Publisher turtleMove = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-    ros::Rate loop_rate(100);
+    // ros::Publisher turtleMove = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+    ros::Rate loop_rate(10);
+
+    std::thread publish(pub_loop, n);
 
     while (ros::ok()){
         ros::spinOnce();
 
-        // Calculate and publish movement command.
-        turtleMove.publish(followCommand());
+        // Calculate and publish movement command on the thread.
+        movement = followCommand();
 
-        // ROS_INFO_STREAM(rgb_info.at<double>(0,0));
+        // ROS_INFO_STREAM("here");
 
 
         loop_rate.sleep();
