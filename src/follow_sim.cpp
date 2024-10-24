@@ -122,6 +122,7 @@ void depthCallback(const sensor_msgs::PointCloud2ConstPtr & msg){
 
   // Width and height should be identical to the RGB image.
   pcl::fromROSMsg(*msg, cloud);
+
   // ROS_INFO_STREAM(cloud.size()); // Length should be resolution height * width
 
 }
@@ -264,6 +265,7 @@ geometry_msgs::Twist followCommand(){
 
     // Get the average depth within the roi bounding box.
     // Also look up the focal length of the lens? No longer needed with point cloud.
+    // ROS_INFO_STREAM(cloud.height);
     std::vector<pcl::PointXYZ> validPoints;
     for (int i = topLeft.y; i < topLeft.y + height; i++){ // Move in y and height. 
       for (int j = topLeft.x; j < topLeft.x + width; j++){ // Move in x and width.
@@ -271,10 +273,13 @@ geometry_msgs::Twist followCommand(){
         // ROS_INFO_STREAM(cloud.width);
         // ROS_INFO_STREAM(cloud.height);
         if((i < 0) || (j < 0) || (i > cloud.height) || (j > cloud.width)){
+        // if((i < 0) || (j < 0) || ((j*i) > (cloud.height*cloud.width))){
+  
           continue; // Do not attempt to get out of bounds depth data.
         }
-
-        pcl::PointXYZ point3d = cloud.at(j, i);
+        // ROS_INFO_STREAM(i);
+        pcl::PointXYZ point3d = cloud.at(j-1, i-1); // If pointcloud is 2d.
+        // pcl::PointXYZ point3d = cloud.at(j*i); // If pointcloud is 1d.
         if (std::isnan(point3d.x) || std::isnan(point3d.y) || std::isnan(point3d.z)){
           continue;
         }
@@ -303,10 +308,10 @@ geometry_msgs::Twist followCommand(){
     // Linear x to go back and forth. Depends on z.
     msg.linear.x = 0.0;
     if (average.z > 1.5){ // Go forwards - too far.
-      msg.linear.x = 0.125;
+      msg.linear.x = 0.1;
     }
     else if(average.z < 1.0){ // Go backwards - too close.
-      msg.linear.x = -0.125;
+      msg.linear.x = -0.1;
     }
 
     // Angular z to rotate. Depends on x.
@@ -376,22 +381,25 @@ int main(int argc, char **argv){
     // Models: https://bitbucket.org/theconstructcore/person_sim/downloads/
 
     // Subscribe to cameras.
-    ros::Subscriber rgbSub = n.subscribe("/camera/rgb/image_raw", 1, rgbCallback);
-    ros::Subscriber depthSub = n.subscribe("/camera/depth/points", 1, depthCallback);
+    ros::Subscriber rgbSub = n.subscribe("/camera/color/image_raw", 1, rgbCallback);
+    // ros::Subscriber depthSub = n.subscribe("/camera/depth/points", 1, depthCallback);
+    ros::Subscriber depthSub = n.subscribe("/camera/depth_registered/points", 1, depthCallback);
     ros::Subscriber depthInfoSub = n.subscribe("/camera/depth/camera_info", 1, depthIntrinsicsCallback);
-    ros::Subscriber rgbInfoSub = n.subscribe("/camera/rgb/camera_info", 1, rgbIntrinsicsCallback);
+    // ros::Subscriber rgbInfoSub = n.subscribe("/camera/rgb/camera_info", 1, rgbIntrinsicsCallback);
+    ros::Subscriber rgbInfoSub = n.subscribe("/camera/color/camera_info", 1, rgbIntrinsicsCallback);
 
     // Make publisher for movement commands. Open turtlebot teleop for this.
-    // ros::Publisher turtleMove = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-    ros::Rate loop_rate(10);
+    ros::Publisher turtleMove = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+    ros::Rate loop_rate(100);
 
-    std::thread publish(pub_loop, n);
+    // std::thread publish(pub_loop, n);
 
     while (ros::ok()){
         ros::spinOnce();
 
         // Calculate and publish movement command on the thread.
         movement = followCommand();
+        turtleMove.publish(movement);
 
         // ROS_INFO_STREAM("here");
 
