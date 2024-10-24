@@ -272,13 +272,13 @@ geometry_msgs::Twist followCommand(){
         // Check that x and y are not out of bounds.
         // ROS_INFO_STREAM(cloud.width);
         // ROS_INFO_STREAM(cloud.height);
-        if((i < 0) || (j < 0) || (i > cloud.height) || (j > cloud.width)){
+        if((i < 0) || (j < 0) || (i >= cloud.height) || (j >= cloud.width)){
         // if((i < 0) || (j < 0) || ((j*i) > (cloud.height*cloud.width))){
   
           continue; // Do not attempt to get out of bounds depth data.
         }
         // ROS_INFO_STREAM(i);
-        pcl::PointXYZ point3d = cloud.at(j-1, i-1); // If pointcloud is 2d.
+        pcl::PointXYZ point3d = cloud.at(j, i); // If pointcloud is 2d.
         // pcl::PointXYZ point3d = cloud.at(j*i); // If pointcloud is 1d.
         if (std::isnan(point3d.x) || std::isnan(point3d.y) || std::isnan(point3d.z)){
           continue;
@@ -380,13 +380,19 @@ int main(int argc, char **argv){
     // Spawn a person.
     // Models: https://bitbucket.org/theconstructcore/person_sim/downloads/
 
+    // These topics work with the simulation.
+
     // Subscribe to cameras.
-    ros::Subscriber rgbSub = n.subscribe("/camera/color/image_raw", 1, rgbCallback);
+    ros::Subscriber rgbSub = n.subscribe("/camera/rgb/image_raw", 1, rgbCallback);
     // ros::Subscriber depthSub = n.subscribe("/camera/depth/points", 1, depthCallback);
-    ros::Subscriber depthSub = n.subscribe("/camera/depth_registered/points", 1, depthCallback);
-    ros::Subscriber depthInfoSub = n.subscribe("/camera/depth/camera_info", 1, depthIntrinsicsCallback);
+    ros::Subscriber depthSub = n.subscribe("/camera/depth/points", 1, depthCallback);
+    // ros::Subscriber depthInfoSub = n.subscribe("/camera/depth/camera_info", 1, depthIntrinsicsCallback);
     // ros::Subscriber rgbInfoSub = n.subscribe("/camera/rgb/camera_info", 1, rgbIntrinsicsCallback);
-    ros::Subscriber rgbInfoSub = n.subscribe("/camera/color/camera_info", 1, rgbIntrinsicsCallback);
+    // ros::Subscriber rgbInfoSub = n.subscribe("/camera/color/camera_info", 1, rgbIntrinsicsCallback);
+
+    // These topics work with the realsense camera connected to the laptop.
+    // ros::Subscriber rgbSub = n.subscribe("/camera/color/image_raw", 1, rgbCallback);
+    // ros::Subscriber depthSub = n.subscribe("/camera/depth_registered/points", 1, depthCallback);
 
     // Make publisher for movement commands. Open turtlebot teleop for this.
     ros::Publisher turtleMove = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
