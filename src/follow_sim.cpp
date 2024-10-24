@@ -228,13 +228,19 @@ geometry_msgs::Twist followCommand(){
       }
       else {
         tracker->init(rgb_img, roi); // Initialise 
-        return msg; // Get tracking on next loop.
+        return msg; // Get tracking on next loop. Safe to delete?
       }
     }
 
     // Update the tracker with new frame.
     // ROS_INFO_STREAM(roi);
-    tracker->update(rgb_img, roi);
+    bool trackSuccess = tracker->update(rgb_img, roi);
+    if (trackSuccess == false){
+      ROS_INFO_STREAM("Tracking subject lost!");
+      cv::imshow(OPENCV_WINDOW, rgb_img);
+      cv::waitKey(3);      
+      return msg;
+    }
     rectangle(rgb_img, roi, Scalar(255,0,0), 2, 1);
 
     // To calculate the 3D Position:
@@ -259,7 +265,7 @@ geometry_msgs::Twist followCommand(){
     // Get the average depth within the roi bounding box.
     // Also look up the focal length of the lens? No longer needed with point cloud.
     std::vector<pcl::PointXYZ> validPoints;
-    for (int i = topLeft.y; i < topLeft.y + height; i++){ // Move in y and height.
+    for (int i = topLeft.y; i < topLeft.y + height; i++){ // Move in y and height. 
       for (int j = topLeft.x; j < topLeft.x + width; j++){ // Move in x and width.
         // Check that x and y are not out of bounds.
         // ROS_INFO_STREAM(cloud.width);
@@ -296,11 +302,11 @@ geometry_msgs::Twist followCommand(){
 
     // Linear x to go back and forth. Depends on z.
     msg.linear.x = 0.0;
-    if (average.z > 2){ // Go forwards - too far.
-      msg.linear.x = 0.1;
+    if (average.z > 1.5){ // Go forwards - too far.
+      msg.linear.x = 0.125;
     }
-    else if(average.z < 1.5){ // Go backwards - too close.
-      msg.linear.x = -0.1;
+    else if(average.z < 1.0){ // Go backwards - too close.
+      msg.linear.x = -0.125;
     }
 
     // Angular z to rotate. Depends on x.
@@ -315,6 +321,7 @@ geometry_msgs::Twist followCommand(){
     // Check that image Mat is accessible outside of callbacks.
     cv::imshow(OPENCV_WINDOW, rgb_img);
     cv::waitKey(3);
+    ROS_INFO_STREAM(average.z);
     
     return msg;
 }
@@ -322,7 +329,9 @@ geometry_msgs::Twist followCommand(){
 void pub_loop(ros::NodeHandle n){
   ros::Publisher turtleMove = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
   while (true){
-    turtleMove.publish(movement);
+    if (roi.width && roi.height){
+      turtleMove.publish(movement);
+    }
   }
 }
 
