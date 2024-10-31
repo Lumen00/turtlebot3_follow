@@ -307,20 +307,20 @@ geometry_msgs::Twist followCommand(){
 
     // Linear x to go back and forth. Depends on z.
     msg.linear.x = 0.0;
-    if (average.z > 1.5){ // Go forwards - too far.
-      msg.linear.x = 0.1;
+    if (average.z > 2.0){ // Go forwards - too far.
+      msg.linear.x = 0.23;
     }
-    else if(average.z < 1.0){ // Go backwards - too close.
-      msg.linear.x = -0.1;
+    else if(average.z < 1.5){ // Go backwards - too close.
+      msg.linear.x = -0.23;
     }
 
     // Angular z to rotate. Depends on x.
     msg.angular.z = 0.0;
     if (average.x > 0.2){ // Person is to the right - turn left.
-      msg.angular.z = -0.2;
+      msg.angular.z = -0.6;
     }
     else if(average.x < -0.2){
-      msg.angular.z=0.2;
+      msg.angular.z=0.6;
     }
 
     // Check that image Mat is accessible outside of callbacks.
@@ -383,28 +383,33 @@ int main(int argc, char **argv){
     // These topics work with the simulation.
 
     // Subscribe to cameras.
-    ros::Subscriber rgbSub = n.subscribe("/camera/rgb/image_raw", 1, rgbCallback);
+    // ros::Subscriber rgbSub = n.subscribe("/camera/rgb/image_raw", 1, rgbCallback);
     // ros::Subscriber depthSub = n.subscribe("/camera/depth/points", 1, depthCallback);
-    ros::Subscriber depthSub = n.subscribe("/camera/depth/points", 1, depthCallback);
+
+    // Legacy topics. Not needed.
     // ros::Subscriber depthInfoSub = n.subscribe("/camera/depth/camera_info", 1, depthIntrinsicsCallback);
     // ros::Subscriber rgbInfoSub = n.subscribe("/camera/rgb/camera_info", 1, rgbIntrinsicsCallback);
     // ros::Subscriber rgbInfoSub = n.subscribe("/camera/color/camera_info", 1, rgbIntrinsicsCallback);
 
-    // These topics work with the realsense camera connected to the laptop.
-    // ros::Subscriber rgbSub = n.subscribe("/camera/color/image_raw", 1, rgbCallback);
-    // ros::Subscriber depthSub = n.subscribe("/camera/depth_registered/points", 1, depthCallback);
+    // These topics work with the realsense camera connected to the laptop. roslaunch turtlebot3_bringup turtlebot3_robot.launch
+    ros::Subscriber rgbSub = n.subscribe("/camera/color/image_raw", 1, rgbCallback);
+    ros::Subscriber depthSub = n.subscribe("/camera/depth_registered/points", 1, depthCallback);
 
     // Make publisher for movement commands. Open turtlebot teleop for this.
     ros::Publisher turtleMove = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
     ros::Rate loop_rate(100);
 
+    // Uncomment if using simulation. For continuous movement.
     // std::thread publish(pub_loop, n);
 
     while (ros::ok()){
         ros::spinOnce();
+        turtleMove.publish(movement);
 
         // Calculate and publish movement command on the thread.
         movement = followCommand();
+
+        // Comment out if using simulation. 
         turtleMove.publish(movement);
 
         // ROS_INFO_STREAM("here");
