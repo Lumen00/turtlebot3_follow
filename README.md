@@ -47,7 +47,8 @@ Navigate to the directory `catkin_ws/src/turtlebot3_follow/src/follow_sim` and o
 This section of the guide will require you to open four terminals. Run the following commands in order in each terminal. Note that the virtual turtlebot model used here is the waffle, which comes with an in-built RGB-D camera.
 1. `roscore`
 2. 
-```export TURTLEBOT3_MODEL=waffle
+```
+export TURTLEBOT3_MODEL=waffle
 roslaunch turtlebot3_follow turtlebot3_person.launch
 ```
 3. 
@@ -66,12 +67,14 @@ Navigate to the directory `catkin_ws/src/turtlebot3_follow/src/follow_sim` and o
 
 This section of the guide will require you to open five terminals. Run the following commands in order in each terminal. Note that the `waffle_pi` turtlebot model is being used, which does not come with an RGB-D camera by default. This project uses an Intel Realsense D435 RGB-D camera which is plugged into the host computer and mounted onto the turtlebot. If you are able to configure your turtlebot to run a connected RGB-D camera, you should do so.
 1. `roscore`
-2. ```
+2. 
+```
 ssh ubuntu@[turtlebot's ip address]
 roslaunch turtlebot3_bringup turtlebot3_robot.launch
 ```
 3. `roslaunch realsense2_camera rs_rgbd.launch`
-4. ```
+4. 
+```
 export TURTLEBOT3_MODEL=waffle_pi
 roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
 ```
