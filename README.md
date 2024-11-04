@@ -37,7 +37,7 @@ Clone this repository into your `catkin_ws/src` directory.
 git clone https://github.com/Lumen00/turtlebot3_follow
 ```
 
-Before continuing, ensure that your ros package is built by navigating into `catkin_ws/src` and running `catkin_make`.
+Before continuing, ensure that your ros package is built by navigating into `catkin_ws` and running `catkin_make`.
 
 You are now ready to run either the simulation or real robot operations.
 
