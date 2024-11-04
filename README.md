@@ -83,6 +83,8 @@ roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
 ### Selecting a feature to track
 Once all terminals have had their commands processed, you will see a window showing the current RGB image of the camera. Select a region of interest by clicking with the mouse cursor and dragging over the desired feature. Press c to cancel the selection and refresh the RGB image shown. If the selection is satisfactory, press either `space` or `enter`. A new window will open with a bounding box drawn over the feature while the turtlebot navigates to follow it.
 
+![tracking window](https://github.com/Lumen00/turtlebot3_follow/blob/master/images/tracker%20with%20bbox.png)
+
 The turtlebot will attempt to keep the feature within 2m of the camera and in the middle of the recorded image.
 
 To stop the following routine, use `ctrl+c` in the terminal which you ran the `follow_sim` command.
