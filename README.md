@@ -60,6 +60,9 @@ roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
 
 The commands from the second terminal will open a Gazebo test environment with a turtlebot and a virtual model of a person.
 
+![tracking window](https://github.com/Lumen00/turtlebot3_follow/blob/master/images/gazebo%20move.png)
+
+
 ### Running w/ Real Robot
 Follow this [online guide](https://emanual.robotis.com/docs/en/platform/turtlebot3/quick-start/) to set up IP addresses for your turtlebot and your host machine. You must be connected to the same local network.
 
